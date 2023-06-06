@@ -1,0 +1,59 @@
+import java.security.cert.TrustAnchor
+import java.sql.Connection
+import groovy.json.JsonSlurper
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.*
+import java.io.OutputStream
+import groovy.json.*
+import groovy.transform.Field
+
+//Intiating varaibles
+@Field def username = "admin"
+@Field def password = "admin"
+//Encoding username and password
+@Field String encoding = Base64.getEncoder().encodeToString(( username + ":" + password ).getBytes("UTF-8"));
+
+def hostnames = "DTPL-LPT-47" 
+//hostnames = hostnames.replace(".YESBANK.IN","").replace(".YESBANK.COM","")
+
+//Method to retrieve Agents
+def getAgents(AgentName) {
+    // Encode the AgentName parameter for URL
+    def encodedAgentName = URLEncoder.encode(AgentName, "UTF-8")
+    
+    // API URL with encoded AgentName
+    def uri = "https://192.168.30.104:8443/rest/agent?rowsPerPage=10&pageNumber=1&orderField=name&sortType=asc&filterFields=name&filterValue_name=${encodedAgentName}&filterType_name=like&filterClass_name=String"
+    
+    // Rest of the code remains the same...
+    // ...
+    
+    if (connection.responseCode == 200) {
+        // get the JSON response
+        json = connection.inputStream.withCloseable { inStream ->
+                        new JsonSlurper().parse(inStream as InputStream)
+        }
+        
+        for (item in json) {
+            def name = item.name
+            def status = item.status
+            
+            if (status == "offline") {
+                println "Agent Name: $name"
+            }
+        }
+    } else if (connection.responseCode == 404) {
+        // Do nothing
+    } else {
+        // Do nothing
+    }
+}
+
+// Call the function with the agent name as an argument
+def commaSeparatedString = "${p:AgentList}"
+// Split the comma-separated string into an array
+def items = commaSeparatedString.split(",")
+// Iterate over the array using a for loop
+for (item in items) {
+    getAgents(item)
+}
