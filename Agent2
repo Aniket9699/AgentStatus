@@ -24,7 +24,7 @@ def getAgents(AgentName) {
     def encodedAgentName = URLEncoder.encode(AgentName, "UTF-8")
     
     //Request URL
-    def uri = url + "/rest/agent?rowsPerPage=250&pageNumber=1&orderField=name&sortType=asc&filterFields=name&filterValue_name=${encodedAgentName}&filterType_name=like&filterClass_name=String"
+    def uri = url + "/rest/agent?rowsPerPage=10&pageNumber=1&orderField=name&sortType=asc&filterFields=name&filterValue_name=${encodedAgentName}&filterType_name=like&filterClass_name=String"
     
     //Payload here 
     def data = ''
@@ -66,7 +66,7 @@ def getAgents(AgentName) {
             def name = item.name
             def status = item.status
             
-            if (status == "offline") {
+            if (status == "ONLINE") {
                 println "Agent Name: $name"
             }
         }
@@ -85,3 +85,4 @@ def items = commaSeparatedString.split(",")
 for (item in items) {
     getAgents(item)
 }
+
