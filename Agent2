@@ -1,0 +1,87 @@
+import java.security.cert.TrustAnchor
+import java.sql.Connection
+import javax.net.ssl.SSLContext
+import groovy.json.JsonSlurper
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
+import java.io.OutputStream
+import groovy.json.*
+import groovy.transform.Field
+
+//Intiating varaibles
+@Field def url = "${p:ucd_url}"
+@Field def username = "${p:Username}"
+@Field def password = "${p:Password}"
+
+//Encoding username and password
+@Field String encoding = Base64.getEncoder().encodeToString(( username + ":" + password ).getBytes("UTF-8"));
+
+def getAgents(AgentName) {
+    // Encode the AgentName parameter for URL
+    def encodedAgentName = URLEncoder.encode(AgentName, "UTF-8")
+    
+    //Request URL
+    def uri = url + "/rest/agent?rowsPerPage=250&pageNumber=1&orderField=name&sortType=asc&filterFields=name&filterValue_name=${encodedAgentName}&filterType_name=like&filterClass_name=String"
+    
+    //Payload here 
+    def data = ''
+    
+    //Creating object to accept all hostnames
+    def nullHostnameVerifier = [
+       verify:{hostname, session -> true} 
+    ]
+    
+    //Accept all certificate ignore SSL check
+    def sc = SSLContext.getInstance("SSL")
+    def trustAll = [getAcceptedIssuers: {}, checkClientTrusted: { a, b -> }, checkServerTrusted: { a, b -> }]
+    sc.init(null, [trustAll as X509TrustManager] as TrustManager[], null);
+    HttpsURLConnection.defaultSSLSocketFactory = sc.socketFactory;
+    HttpsURLConnection.setDefaultHostnameVerifier(nullHostnameVerifier as HostnameVerifier);
+    
+    //Setting up connection
+    def connection = new URL(uri).openConnection() as HttpURLConnection
+
+    //Setting Headers
+    connection.setRequestMethod("GET");
+    connection.setRequestProperty("Accept", "application/json")
+    connection.setRequestProperty("Authorization","Basic " + encoding)
+ 
+    //println"===========================Response Headers============================================="
+    Map<String, List<String>> map = connection.getHeaderFields();
+    for(Map.Entry<String, List<String>> entry : map.entrySet()){
+        //println"${entry.getKey()}:${entry.getValue()}"
+    }
+    //println"========================================================================================"
+    
+    if (connection.responseCode == 200) {
+        // get the JSON response
+        json = connection.inputStream.withCloseable { inStream ->
+                        new JsonSlurper().parse(inStream as InputStream)
+        }
+        
+        for (item in json) {
+            def name = item.name
+            def status = item.status
+            
+            if (status == "offline") {
+                println "Agent Name: $name"
+            }
+        }
+    } else if (connection.responseCode == 404) {
+        // Do nothing
+    } else {
+        // Do nothing
+    }
+}
+
+// Call the function with the agent name as an argument
+def commaSeparatedString = "${p:AgentList}"
+// Split the comma-separated string into an array
+def items = commaSeparatedString.split(",")
+// Iterate over the array using a for loop
+for (item in items) {
+    getAgents(item)
+}
