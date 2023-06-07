@@ -62,29 +62,14 @@ def getAgents(int NumberOfpage){
                         new JsonSlurper().parse( inStream as InputStream )
     }
     //retrieve data from JSON
-    for (entry in json) {
+        for (entry in json) {
         // retrieve data from each entry
-        println "________________________Agent Details___________________________________________"
         def name = entry.name
-        def licenseType = entry.licenseType
         def status = entry.status
-        def Ip=getAgentIpAndOsType(name,"ip")
-        def OS=getAgentIpAndOsType(name,"sys.os.name")
-        def USER1=getAgentIpAndOsType(name,"USER")
-        // We need data in string format to add into file
-        // convert data into string
-        def nameStr = "${name}"
-        def licenseTypeStr = "${licenseType}" 
-        def statusStr = "${status}"
-        def IpStr = "${Ip}"
-        def OSStr = "${OS}"
-        def USERStr = "${USER1}"
-        println "Adding ${nameStr},${licenseTypeStr},${statusStr},${IpStr},${OSStr},${USERStr} into agent.txt file"
-        println "_________________________________________________________________________________"
-        // file.append("${nameStr},${licenseTypeStr},${statusStr},${IpStr},${OSStr},${USERStr}\n")
-        file.append("${IpStr}=${nameStr}\n")
+        if (status == "OFFLINE") {
+            println "Agent Name: ${name}"
+        }
     }
-     
     // Write data to text file
     }else if(connection.responseCode == 404){
      //Do nothing
